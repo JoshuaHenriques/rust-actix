@@ -21,6 +21,16 @@ async fn main() -> std::io::Result<()>{
         counter: Mutex::new(0),
     });
 
+    // load TLS keys
+    // to create a self-signed temporary cert for testing:
+    // `openssl req -x509 - newKey rsa:4096 -nodes -keyout key.pem -out cert.pem -days 365 -subj '/CN=localhost'`
+    // let mut builder = SslAcceptor::mozilla_intermediate(SslMethod::tls()).unwrap();
+    // builder
+    //     .set_private_key_file("key.pem", SslFiletype::PEM)
+    //     .unwrap();
+    // builder.set_certificate_chain_file("cert.pem").unwrap();
+
+
     HttpServer::new(move || {
         App::new()
             // setting up routes
@@ -28,14 +38,17 @@ async fn main() -> std::io::Result<()>{
             .service(routes::manual_hello)
             .service(routes::echo)
             .service(routes::hello)
-            .service(routes::index_state)
-
+            .service(routes::counter_state)
+            .service(routes::users)
+            .service(routes::unsafe_users)
+            .service(routes::welcome)
+            .service(routes::serde_type)
             // manual way to assign a route
             // .route("/hey", web::get().to(routes::manual_hello))
             .service(
                 // This scope represents a resource prefix that will be prepended to all resource patterns added by the resource configuration.
                 web::scope("/app")
-                    .route("/index", web::get().to(routes::index))
+                    .route("/name", web::get().to(routes::app_name_state))
             )
 
             // data and app_data are similar for adding state
@@ -46,7 +59,9 @@ async fn main() -> std::io::Result<()>{
             .app_data(counter.clone()) // <- register the created data
 
     })
+        // .bind_openssl("127.0.0.1:8080", builder)?
         .bind("127.0.0.1:8080")?
+        // .workers(4);
         .run()
         .await
 }
