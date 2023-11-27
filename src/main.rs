@@ -3,6 +3,8 @@ mod messages;
 mod lobby;
 mod structs;
 use std::sync::Mutex;
+use std::sync::Arc;
+use std::sync::atomic::AtomicUsize;
 use std::cell::Cell;
 use lobby::Lobby;
 mod routes;
@@ -21,9 +23,9 @@ async fn main() -> std::io::Result<()>{
         mut_counter: Mutex::new(0),
     });
 
-    // will only count the number of requests handled by each worker thread
-    let cell_counter = structs::AppStateWithCounterCell {
+    let cell_counter = structs::AppStateWithCounter {
         cell_counter: Cell::new(0),
+        arc_counter: Arc::new(AtomicUsize::new(0)),
     };
 
     // load TLS keys

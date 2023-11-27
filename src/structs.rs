@@ -1,18 +1,26 @@
-use std::sync::Mutex;
+use std::{
+    cell::Cell,
+    sync::atomic::AtomicUsize,
+    sync::Arc,
+    sync::Mutex,
+};
 use serde::Deserialize;
-use std::cell::Cell;
 pub struct AppState {
     pub app_name: String,
     pub mut_name: String,
 }
 
 pub struct AppStateWithCounterMutex {
-    pub mut_counter: Mutex<i32>, // <- Mutex is necessary to mutate safely across threads
+    // <- Mutex is necessary to mutate safely across threads
+    pub mut_counter: Mutex<i32>, 
 }
 
 #[derive(Clone)]
-pub struct AppStateWithCounterCell{
-    pub cell_counter: Cell<usize>, // <- Mutex is necessary to mutate safely across threads
+pub struct AppStateWithCounter {
+    // will only count th enumber of requests handled by each worker thread
+    pub cell_counter: Cell<usize>, 
+    // to count the number of total requests across all threads
+    pub arc_counter: Arc<AtomicUsize>,
 }
 
 #[derive(Deserialize)]

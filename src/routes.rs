@@ -1,4 +1,4 @@
-use std::cell;
+use std::sync::atomic::Ordering;
 use std::time::Duration;
 use crate::{ws::WsConn};
 use crate::lobby::Lobby;
@@ -69,12 +69,15 @@ async fn counter_state(data: Data<structs::AppStateWithCounterMutex>) -> String 
 }
 
 #[get("/counter_state2")]
-async fn counter_state2(data: Data<structs::AppStateWithCounterCell>) -> String {
+async fn counter_state2(data: Data<structs::AppStateWithCounter>) -> String {
     let mut cell_count = data.cell_counter.get();
     cell_count += 1;
     data.cell_counter.set(cell_count);
 
-    format!("Cell Counter: {cell_count}") // <- response with count
+    let arc_counter = data.arc_counter.load(Ordering::Relaxed);
+    data.arc_counter.fetch_add(1, Ordering::Relaxed);
+
+    format!("Cell Counter: {cell_count}, Arc Counter: {arc_counter}") // <- response with count
 }
 // extract path info from "/users/{user_id}/{friend}" url
 // {user_id} - deserializes to a u32
